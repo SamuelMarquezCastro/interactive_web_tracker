@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+
+</head>
+
+<body>
+
+    <main>
+
+        <section id="start-screen" class="screen active">
+            <div class="overlay">
+                <h1>Mountain Quest</h1>
+                <div class="instructions">
+                    <p>Snap to start</p>
+                    <p>Say "a" to run</p>
+                    <p>Clap to jump</p>
+                </div>
+                <button id="start-button">Start game</button>
+            </div>
+        </section>
+
+
+        <section id="game-screen" class="screen active">
+            <div class="overlay">
+                <h2>Game screen</h2>
+                <p>Hier komt de p5play game.</p>
+                <button id="finish-button">Ga naar score</button>
+            </div>
+        </section>
+
+
+        <section id="score-screen" class="screen active">
+            <div class="overlay">
+                <h2>Congratulations!</h2>
+                <p>Your score: <span id="final-score">0</span></p>
+                <button id="restart-button">Restart</button>
+            </div>
+        </section>
+    </main>
+
+
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>

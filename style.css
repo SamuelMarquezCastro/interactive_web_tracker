@@ -1,0 +1,88 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #111;
+    color: white;
+  }
+  
+  main {
+    width: 100%;
+    height: 100vh;
+  }
+  
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  
+  .screen.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #start-screen {
+    background: linear-gradient(to bottom, #4a6fa5, #f7b267);
+  }
+  
+  #game-screen {
+    background: linear-gradient(to bottom, #3a86ff, #1d3557);
+  }
+  
+  #score-screen {
+    background: linear-gradient(to bottom, #6d597a, #f4a261);
+  }
+  
+  .overlay {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.35);
+    padding: 2rem;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 700px;
+  }
+  
+  h1 {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+  }
+  
+  h2 {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .instructions {
+    margin-bottom: 2rem;
+  }
+  
+  .instructions p {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    color: #b8ffb0;
+    font-weight: bold;
+  }
+  
+  button {
+    padding: 0.9rem 1.6rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: white;
+    color: #222;
+    font-weight: bold;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
