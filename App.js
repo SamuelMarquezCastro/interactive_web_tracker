@@ -11,10 +11,14 @@ export default class App {
     this.finishButton = document.getElementById("finish-button");
     this.restartButton = document.getElementById("restart-button");
     this.finalScore = document.getElementById("final-score");
+    this.hudScore = document.getElementById("hud-score");
     this.game = new Game({
       containerId: "game-container",
       onLevelComplete: (score) => {
         this.finishGame(score);
+      },
+      onScoreChange: (score) => {
+        this.updateScore(score);
       },
     });
   }
@@ -76,5 +80,6 @@ export default class App {
 
   updateScore(score) {
     this.finalScore.textContent = score;
+    this.hudScore.textContent = score;
   }
 }

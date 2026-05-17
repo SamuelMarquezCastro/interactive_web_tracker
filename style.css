@@ -111,6 +111,17 @@
     margin-top: 0.35rem;
   }
 
+  .score-pill {
+    margin-top: 0;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.16);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
   #game-container {
     width: 100%;
     min-height: 420px;
