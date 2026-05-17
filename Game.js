@@ -6,16 +6,21 @@ export default class Game {
     this.isInitialized = false;
     this.isActive = false;
     this.score = 0;
-    this.levelWidth = 2200;
+    this.levelWidth = 2600;
+    this.assets = {};
+    this.platforms = [];
+    this.gems = [];
+    this.goal = null;
+    this.player = null;
+    this.playerState = "idle";
     this.jumpPressedLastFrame = false;
-    this.groundedFrames = 0;
     this.isDying = false;
     this.deathTimer = 0;
     this.deathMessage = "";
-    this.solids = [];
-    this.gems = [];
-    this.playerState = "idle";
-    this.assets = {};
+    this.cloudLayers = [
+      { y: 70, w: 260, h: 80, speed: 0.05, alpha: 0.8 },
+      { y: 140, w: 210, h: 64, speed: 0.1, alpha: 0.45 },
+    ];
   }
 
   init() {
@@ -84,8 +89,6 @@ export default class Game {
   setup() {
     const canvas = createCanvas(this.getCanvasWidth(), this.getCanvasHeight());
     canvas.parent(this.containerId);
-
-    world.gravity.y = 18;
     this.resetLevel();
   }
 
@@ -95,80 +98,65 @@ export default class Game {
     }
 
     this.score = 0;
-    this.solids = [];
-    this.gems = [];
+    this.onScoreChange?.(this.score);
     this.jumpPressedLastFrame = false;
-    this.groundedFrames = 0;
     this.isDying = false;
     this.deathTimer = 0;
     this.deathMessage = "";
     this.playerState = "idle";
-    this.onScoreChange?.(this.score);
 
+    this.buildLevel();
     this.createPlayer();
-    this.createLevelGeometry();
-    this.createGems();
-    this.createGoal();
     this.centerCameraOnStart();
   }
 
+  buildLevel() {
+    this.platforms = [
+      { x: 180, y: 500, w: 250, h: 24 },
+      { x: 470, y: 425, w: 170, h: 24 },
+      { x: 730, y: 350, w: 150, h: 24 },
+      { x: 970, y: 435, w: 180, h: 24 },
+      { x: 1240, y: 325, w: 150, h: 24 },
+      { x: 1510, y: 405, w: 180, h: 24 },
+      { x: 1785, y: 295, w: 150, h: 24 },
+      { x: 2050, y: 385, w: 170, h: 24 },
+      { x: 2320, y: 305, w: 180, h: 24 },
+    ];
+
+    this.gems = [
+      { x: 180, y: 450, points: 10, collected: false },
+      { x: 470, y: 375, points: 15, collected: false },
+      { x: 730, y: 300, points: 20, collected: false },
+      { x: 970, y: 385, points: 15, collected: false },
+      { x: 1240, y: 275, points: 25, collected: false },
+      { x: 1510, y: 355, points: 20, collected: false },
+      { x: 1785, y: 245, points: 30, collected: false },
+      { x: 2050, y: 335, points: 20, collected: false },
+      { x: 2320, y: 255, points: 35, collected: false },
+    ];
+
+    this.goal = {
+      x: 2480,
+      y: 245,
+      w: 40,
+      h: 150,
+    };
+  }
+
   createPlayer() {
-    this.player = new Sprite(120, 260, 28, 30);
+    this.player = new Sprite(110, 462, 18, 18);
+    this.player.collider = "none";
     this.player.rotationLock = true;
-    this.player.friction = 0;
-    this.player.drag = 4;
+    this.player.vel.x = 0;
+    this.player.vel.y = 0;
     this.player.addAni("idle", this.assets.playerIdle);
     this.player.addAni("run", this.assets.playerRun);
     this.player.addAni("jump", this.assets.playerJump);
     this.player.changeAni("idle");
     this.player.ani.scale = 2.2;
-    this.player.layer = 15;
+    this.player.layer = 10;
     this.player.debug = false;
-  }
-
-  createLevelGeometry() {
-    this.addPlatform(this.levelWidth / 2, 470, this.levelWidth, 80, "#2f855a");
-    this.addPlatform(360, 390, 180, 24, "#3f9b67");
-    this.addPlatform(620, 330, 140, 24, "#3f9b67");
-    this.addPlatform(920, 285, 160, 24, "#3f9b67");
-    this.addPlatform(1240, 345, 180, 24, "#3f9b67");
-    this.addPlatform(1560, 260, 160, 24, "#3f9b67");
-    this.addPlatform(1880, 320, 180, 24, "#3f9b67");
-  }
-
-  addPlatform(x, y, w, h, color) {
-    const platform = new Sprite(x, y, w, h, "static");
-    platform.color = color;
-    platform.stroke = "#1f5133";
-    platform.visible = false;
-    this.solids.push(platform);
-  }
-
-  createGoal() {
-    this.goal = new Sprite(this.levelWidth - 120, 380, 36, 140, "static");
-    this.goal.color = "#fde047";
-    this.goal.stroke = "#a16207";
-    this.goal.visible = false;
-  }
-
-  createGems() {
-    const gemSpots = [
-      { x: 310, y: 345, points: 10 },
-      { x: 620, y: 280, points: 15 },
-      { x: 930, y: 235, points: 20 },
-      { x: 1250, y: 295, points: 20 },
-      { x: 1560, y: 210, points: 25 },
-      { x: 1890, y: 270, points: 30 },
-    ];
-
-    gemSpots.forEach((gemSpot) => {
-      const gem = new Sprite(gemSpot.x, gemSpot.y, 20, 20, "static");
-      gem.img = this.assets.gem;
-      gem.img.scale = 1.8;
-      gem.points = gemSpot.points;
-      gem.layer = 10;
-      this.gems.push(gem);
-    });
+    this.player.grounded = false;
   }
 
   update() {
@@ -189,57 +177,112 @@ export default class Game {
     const jumpPressed =
       kb.pressing("space") || kb.pressing("up") || kb.pressing("w");
 
+    this.applyHorizontalMovement(moveRight, moveLeft);
+    this.applyGravity();
+    this.resolvePlatformCollisions(jumpPressed);
+    this.jumpPressedLastFrame = jumpPressed;
+    this.collectGems();
+    this.checkGoal();
+    this.updatePlayerAnimation(moveRight, moveLeft);
+
+    if (this.player.y > height + 80) {
+      this.triggerDeath("You fell off the map!");
+    }
+  }
+
+  applyHorizontalMovement(moveRight, moveLeft) {
+    const runSpeed = 4.2;
+
     if (moveRight && !moveLeft) {
-      this.player.vel.x = 4.2;
+      this.player.vel.x = runSpeed;
     } else if (moveLeft && !moveRight) {
-      this.player.vel.x = -4.2;
+      this.player.vel.x = -runSpeed;
     } else {
       this.player.vel.x *= 0.82;
 
-      if (Math.abs(this.player.vel.x) < 0.1) {
+      if (Math.abs(this.player.vel.x) < 0.08) {
         this.player.vel.x = 0;
       }
     }
 
-    const isGrounded = this.solids.some((platform) =>
-      this.player.colliding(platform)
-    );
+    this.player.x += this.player.vel.x;
+    this.player.x = constrain(this.player.x, 40, this.levelWidth - 40);
+  }
 
-    if (isGrounded) {
-      this.groundedFrames = Math.min(this.groundedFrames + 1, 12);
-    } else {
-      this.groundedFrames = 0;
+  applyGravity() {
+    this.player.vel.y += 0.48;
+    this.player.vel.y = Math.min(this.player.vel.y, 12);
+    this.player.y += this.player.vel.y;
+    this.player.grounded = false;
+  }
+
+  resolvePlatformCollisions(jumpPressed) {
+    const playerLeft = this.player.x - this.player.w / 2;
+    const playerRight = this.player.x + this.player.w / 2;
+    const playerBottom = this.player.y + this.player.h / 2;
+    const previousBottom = playerBottom - this.player.vel.y;
+
+    for (const platform of this.platforms) {
+      const left = platform.x - platform.w / 2;
+      const right = platform.x + platform.w / 2;
+      const top = platform.y - platform.h / 2;
+
+      const overlapsX = playerRight > left + 6 && playerLeft < right - 6;
+      const wasAbove = previousBottom <= top + 2;
+      const isCrossingTop = playerBottom >= top && playerBottom <= top + 22;
+
+      if (overlapsX && wasAbove && isCrossingTop && this.player.vel.y >= 0) {
+        this.player.y = top - this.player.h / 2;
+        this.player.vel.y = 0;
+        this.player.grounded = true;
+        break;
+      }
     }
 
-    if (jumpPressed && !this.jumpPressedLastFrame && this.groundedFrames > 0) {
-      this.player.vel.y = -11;
-      this.groundedFrames = 0;
+    if (jumpPressed && !this.jumpPressedLastFrame && this.player.grounded) {
+      this.player.vel.y = -10.8;
+      this.player.grounded = false;
     }
+  }
 
-    this.jumpPressedLastFrame = jumpPressed;
-    this.updatePlayerAnimation(moveRight, moveLeft);
-    this.collectGems();
+  collectGems() {
+    for (const gem of this.gems) {
+      if (gem.collected) continue;
 
-    if (this.player.y > height + 160) {
-      this.triggerDeath("You fell off the map!");
+      const dx = Math.abs(this.player.x - gem.x);
+      const dy = Math.abs(this.player.y - gem.y);
+
+      if (dx < 20 && dy < 22) {
+        gem.collected = true;
+        this.score += gem.points;
+        this.onScoreChange?.(this.score);
+      }
     }
+  }
 
-    if (this.player.overlapping(this.goal)) {
+  checkGoal() {
+    const dx = Math.abs(this.player.x - this.goal.x);
+    const dy = Math.abs(this.player.y - this.goal.y);
+
+    if (dx < 28 && dy < 90) {
       this.isActive = false;
       this.onLevelComplete?.(this.score);
     }
   }
 
   drawFrame() {
-    background("#7dd3fc");
+    background("#79b8ff");
+
     if (this.player && this.isActive) {
       this.updateCamera();
     } else if (this.player) {
       this.centerCameraOnStart();
     }
 
-    this.drawBackdrop();
+    this.drawSky();
+    this.drawClouds();
     this.drawPlatforms();
+    this.drawGems();
     this.drawGoalMarker();
 
     if (!this.player) return;
@@ -249,32 +292,35 @@ export default class Game {
     camera.on();
   }
 
-  drawBackdrop() {
-    imageMode(CORNER);
-    this.drawSkyGradient();
-    this.drawSingleBackground();
-    this.drawTiledLayer(this.assets.clouds, 54, 280, 86, 0.04, 0.78);
-    this.drawTiledLayer(this.assets.clouds, 120, 220, 68, 0.08, 0.45);
-  }
-
-  drawSkyGradient() {
+  drawSky() {
     noFill();
 
     for (let y = 0; y < height; y += 2) {
       const blend = y / height;
-      const r = lerp(55, 182, blend);
-      const g = lerp(115, 228, blend);
-      const b = lerp(248, 255, blend);
+      const r = lerp(66, 189, blend);
+      const g = lerp(133, 239, blend);
+      const b = lerp(245, 255, blend);
 
       stroke(r, g, b);
       line(0, y, width, y);
     }
+
+    if (this.assets.sky) {
+      this.drawTiledLayer(this.assets.sky, height - 295, 360, 295, 0.15, 0.95);
+    }
   }
 
-  drawSingleBackground() {
-    if (!this.assets.sky) return;
-
-    this.drawTiledLayer(this.assets.sky, height - 340, 420, 340, 0.14, 0.92);
+  drawClouds() {
+    for (const layer of this.cloudLayers) {
+      this.drawTiledLayer(
+        this.assets.clouds,
+        layer.y,
+        layer.w,
+        layer.h,
+        layer.speed,
+        layer.alpha
+      );
+    }
   }
 
   drawPlatforms() {
@@ -282,37 +328,48 @@ export default class Game {
 
     imageMode(CORNER);
 
-    this.solids.forEach((platform) => {
+    for (const platform of this.platforms) {
       this.drawPlatformTiles(platform);
-    });
+    }
   }
 
   drawPlatformTiles(platform) {
     const tileSize = 16;
     const left = platform.x - platform.w / 2;
     const top = platform.y - platform.h / 2;
-    const cols = Math.max(1, Math.round(platform.w / tileSize));
-    const rows = Math.max(1, Math.round(platform.h / tileSize));
+    const cols = Math.round(platform.w / tileSize);
 
-    for (let row = 0; row < rows; row += 1) {
-      for (let col = 0; col < cols; col += 1) {
-        const dx = left + col * tileSize;
-        const dy = top + row * tileSize;
-        const sx = col === 0 ? 0 : col === cols - 1 ? 32 : 16;
-        const sy = row === 0 ? 0 : row === rows - 1 ? 48 : 16;
+    for (let col = 0; col < cols; col += 1) {
+      const dx = left + col * tileSize;
+      const sx = col === 0 ? 0 : col === cols - 1 ? 32 : 16;
 
-        image(
-          this.assets.tileset,
-          dx,
-          dy,
-          tileSize,
-          tileSize,
-          sx,
-          sy,
-          tileSize,
-          tileSize
-        );
-      }
+      image(this.assets.tileset, dx, top, tileSize, tileSize, sx, 0, 16, 16);
+      image(
+        this.assets.tileset,
+        dx,
+        top + 16,
+        tileSize,
+        tileSize,
+        sx,
+        16,
+        16,
+        16
+      );
+    }
+  }
+
+  drawGems() {
+    if (!this.assets.gem) return;
+
+    imageMode(CENTER);
+
+    for (const gem of this.gems) {
+      if (gem.collected) continue;
+
+      push();
+      tint(255);
+      image(this.assets.gem, gem.x, gem.y, 27, 23);
+      pop();
     }
   }
 
@@ -323,7 +380,7 @@ export default class Game {
     rectMode(CENTER);
     noStroke();
     fill(71, 85, 105);
-    rect(this.goal.x, this.goal.y + 10, 8, 150);
+    rect(this.goal.x, this.goal.y + 20, 8, this.goal.h);
     fill("#fef08a");
     triangle(
       this.goal.x + 4,
@@ -351,6 +408,7 @@ export default class Game {
 
     push();
     tint(255, 255 * opacity);
+    imageMode(CORNER);
 
     for (let x = startX; x < width + tileWidth; x += tileWidth) {
       image(img, x, drawY, tileWidth, tileHeight);
@@ -366,25 +424,34 @@ export default class Game {
     fill("#ffffff");
     textSize(16);
     textAlign(LEFT, TOP);
+
     if (this.isDying) {
       text(this.deathMessage, 30, 34);
       text("Restarting the level...", 30, 60);
       return;
     }
 
-    text("Collect the gems and reach the yellow marker.", 30, 30);
-    text("Easy gems are low. The higher gems are worth more points.", 30, 52);
+    text("Jump from platform to platform in the sky.", 30, 30);
+    text("Collect gems and reach the flag.", 30, 52);
     text(`Current score: ${this.score}`, 30, 74);
   }
 
   updateCamera() {
+    const followStart = width * 0.55;
+
+    if (this.player.x <= followStart) {
+      camera.x = width / 2;
+      camera.y = height / 2;
+      return;
+    }
+
     const targetX = constrain(
-      this.player.x + width * 0.15,
+      this.player.x + width * 0.08,
       width / 2,
       this.levelWidth - width / 2
     );
 
-    camera.x = lerp(camera.x, targetX, 0.12);
+    camera.x = lerp(camera.x, targetX, 0.1);
     camera.y = height / 2;
   }
 
@@ -411,28 +478,27 @@ export default class Game {
   }
 
   updatePlayerAnimation(moveRight, moveLeft) {
-    const movingHorizontally = Math.abs(this.player.vel.x) > 0.45;
-    const clearlyAirborne =
-      this.groundedFrames === 0 && Math.abs(this.player.vel.y) > 0.6;
+    const movingHorizontally = Math.abs(this.player.vel.x) > 0.25;
+    const clearlyAirborne = !this.player.grounded && Math.abs(this.player.vel.y) > 0.6;
 
     if (clearlyAirborne) {
-      this.setPlayerAnimation("jump", 2.2);
+      this.setPlayerAnimation("jump");
       return;
     }
 
-    if ((moveRight || moveLeft || movingHorizontally) && this.groundedFrames > 1) {
-      this.setPlayerAnimation("run", 2.2);
+    if (moveRight || moveLeft || movingHorizontally) {
+      this.setPlayerAnimation("run");
       return;
     }
 
-    this.setPlayerAnimation("idle", 2.2);
+    this.setPlayerAnimation("idle");
   }
 
-  setPlayerAnimation(name, scale) {
+  setPlayerAnimation(name) {
     if (this.playerState === name) return;
 
     this.player.changeAni(name);
-    this.player.ani.scale = scale;
+    this.player.ani.scale = 2.2;
     this.playerState = name;
   }
 
@@ -442,21 +508,6 @@ export default class Game {
     this.deathMessage = message;
     this.player.vel.x = 0;
     this.player.vel.y = 0;
-    this.setPlayerAnimation("idle", 2.2);
-  }
-
-  collectGems() {
-    this.gems = this.gems.filter((gem) => {
-      if (!gem || gem.removed) return false;
-
-      if (this.player.overlapping(gem)) {
-        this.score += gem.points;
-        this.onScoreChange?.(this.score);
-        gem.remove();
-        return false;
-      }
-
-      return true;
-    });
+    this.setPlayerAnimation("idle");
   }
 }
