@@ -6,7 +6,7 @@ export default class Game {
     this.isInitialized = false;
     this.isActive = false;
     this.score = 0;
-    this.levelWidth = 2600;
+    this.levelWidth = 3900;
     this.assets = {};
     this.platforms = [];
     this.gems = [];
@@ -19,8 +19,8 @@ export default class Game {
     this.deathMessage = "";
     this.cameraX = 0;
     this.cloudLayers = [
-      { y: 70, w: 260, h: 80, speed: 0.05, alpha: 0.8 },
-      { y: 140, w: 210, h: 64, speed: 0.1, alpha: 0.45 },
+      { y: 58, w: 240, h: 74, speed: 0.03, alpha: 0.4 },
+      { y: 118, w: 200, h: 60, speed: 0.07, alpha: 0.22 },
     ];
   }
 
@@ -110,36 +110,31 @@ export default class Game {
 
   buildLevel() {
     this.platforms = [
-      { x: 130, y: 510, w: 96, h: 16 },
-      { x: 300, y: 465, w: 48, h: 16 },
-      { x: 445, y: 525, w: 112, h: 16, spikes: [{ x: 0, w: 45 }] },
-      { x: 620, y: 455, w: 48, h: 16 },
-      { x: 780, y: 398, w: 96, h: 16, spikes: [{ x: 30, w: 30 }] },
-      { x: 970, y: 508, w: 64, h: 16 },
-      { x: 1135, y: 435, w: 48, h: 16 },
-      { x: 1300, y: 360, w: 96, h: 16, spikes: [{ x: 15, w: 45 }] },
-      { x: 1490, y: 430, w: 48, h: 16 },
-      { x: 1660, y: 370, w: 64, h: 16 },
-      { x: 1835, y: 315, w: 96, h: 16, spikes: [{ x: 30, w: 30 }] },
-      { x: 2035, y: 390, w: 48, h: 16 },
-      { x: 2210, y: 335, w: 80, h: 16 },
+      { x: 220, y: 540, w: 240, h: 32 },
+      { x: 560, y: 470, w: 120, h: 32 },
+      { x: 880, y: 555, w: 280, h: 32, spikes: [{ x: 0, w: 96 }] },
+      { x: 1250, y: 450, w: 120, h: 32 },
+      { x: 1590, y: 370, w: 240, h: 32, spikes: [{ x: 80, w: 80 }] },
+      { x: 1990, y: 525, w: 160, h: 32 },
+      { x: 2310, y: 430, w: 120, h: 32 },
+      { x: 2660, y: 330, w: 240, h: 32, spikes: [{ x: 40, w: 120 }] },
+      { x: 3040, y: 440, w: 120, h: 32 },
+      { x: 3400, y: 330, w: 200, h: 32 },
     ];
 
     this.gems = [
-      { x: 130, y: 470, points: 10, collected: false },
-      { x: 300, y: 420, points: 15, collected: false },
-      { x: 620, y: 410, points: 20, collected: false },
-      { x: 970, y: 468, points: 15, collected: false },
-      { x: 1135, y: 390, points: 20, collected: false },
-      { x: 1490, y: 385, points: 20, collected: false },
-      { x: 1660, y: 325, points: 25, collected: false },
-      { x: 2035, y: 345, points: 30, collected: false },
-      { x: 2210, y: 290, points: 35, collected: false },
+      { x: 220, y: 480, points: 10, collected: false },
+      { x: 560, y: 408, points: 15, collected: false },
+      { x: 1250, y: 388, points: 20, collected: false },
+      { x: 1990, y: 463, points: 15, collected: false },
+      { x: 2310, y: 368, points: 25, collected: false },
+      { x: 3040, y: 378, points: 30, collected: false },
+      { x: 3400, y: 268, points: 40, collected: false },
     ];
 
     this.goal = {
-      x: 2410,
-      y: 280,
+      x: 3660,
+      y: 268,
       w: 40,
       h: 150,
     };
@@ -147,10 +142,10 @@ export default class Game {
 
   createPlayer() {
     this.player = {
-      x: 110,
-      y: 472,
-      w: 18,
-      h: 18,
+      x: 220,
+      y: 506,
+      w: 16,
+      h: 14,
       vx: 0,
       vy: 0,
       grounded: false,
@@ -266,7 +261,7 @@ export default class Game {
   checkSpikeHazards() {
     const playerLeft = this.player.x - this.player.w / 2 + 3;
     const playerRight = this.player.x + this.player.w / 2 - 3;
-    const playerTop = this.player.y - this.player.h / 2 + 2;
+    const playerTop = this.player.y - this.player.h / 2 + 1;
     const playerBottom = this.player.y + this.player.h / 2 - 2;
 
     for (const platform of this.platforms) {
@@ -321,7 +316,7 @@ export default class Game {
 
   drawSky() {
     if (this.assets.sky) {
-      this.drawTiledLayer(this.assets.sky, 0, 420, height, 0.08, 1);
+      this.drawTiledLayer(this.assets.sky, 0, 320, height, 0.05, 1);
     }
   }
 
@@ -348,7 +343,7 @@ export default class Game {
   drawPlatform(platform) {
     if (!this.assets.platform) return;
 
-    const tileSize = 16;
+    const tileSize = 40;
     const left = this.toScreenX(platform.x - platform.w / 2);
     const top = platform.y - platform.h / 2;
     const cols = Math.round(platform.w / tileSize);
@@ -364,19 +359,19 @@ export default class Game {
     if (!this.assets.spikes || !platform.spikes?.length) return;
 
     const platformLeft = this.toScreenX(platform.x - platform.w / 2);
-    const drawY = platform.y - platform.h / 2 - 10;
+    const drawY = platform.y - platform.h / 2 - 20;
     imageMode(CORNER);
 
     for (const spike of platform.spikes) {
-      const cols = Math.round(spike.w / 15);
+      const cols = Math.round(spike.w / 30);
 
       for (let col = 0; col < cols; col += 1) {
         image(
           this.assets.spikes,
-          platformLeft + spike.x + col * 15,
+          platformLeft + spike.x + col * 30,
           drawY,
-          15,
-          10
+          30,
+          20
         );
       }
     }
@@ -541,7 +536,7 @@ export default class Game {
     if (!currentAni) return;
 
     imageMode(CENTER);
-    animation(currentAni, this.toScreenX(this.player.x), this.player.y, 60, 58);
+    animation(currentAni, this.toScreenX(this.player.x), this.player.y - 24, 42, 40);
   }
 
   toScreenX(worldX) {
