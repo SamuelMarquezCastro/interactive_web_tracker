@@ -17,6 +17,7 @@ export default class Game {
     this.isDying = false;
     this.deathTimer = 0;
     this.deathMessage = "";
+    this.cameraX = 0;
     this.cloudLayers = [
       { y: 70, w: 260, h: 80, speed: 0.05, alpha: 0.8 },
       { y: 140, w: 210, h: 64, speed: 0.1, alpha: 0.45 },
@@ -93,10 +94,6 @@ export default class Game {
   }
 
   resetLevel() {
-    if (typeof allSprites !== "undefined") {
-      allSprites.deleteAll();
-    }
-
     this.score = 0;
     this.onScoreChange?.(this.score);
     this.jumpPressedLastFrame = false;
@@ -113,26 +110,26 @@ export default class Game {
   buildLevel() {
     this.platforms = [
       { x: 180, y: 500, w: 250, h: 24 },
-      { x: 470, y: 425, w: 170, h: 24 },
-      { x: 730, y: 350, w: 150, h: 24 },
-      { x: 970, y: 435, w: 180, h: 24 },
-      { x: 1240, y: 325, w: 150, h: 24 },
-      { x: 1510, y: 405, w: 180, h: 24 },
-      { x: 1785, y: 295, w: 150, h: 24 },
-      { x: 2050, y: 385, w: 170, h: 24 },
-      { x: 2320, y: 305, w: 180, h: 24 },
+      { x: 470, y: 430, w: 190, h: 24 },
+      { x: 730, y: 385, w: 200, h: 24 },
+      { x: 1000, y: 435, w: 190, h: 24 },
+      { x: 1280, y: 360, w: 180, h: 24 },
+      { x: 1560, y: 410, w: 200, h: 24 },
+      { x: 1840, y: 340, w: 180, h: 24 },
+      { x: 2120, y: 390, w: 190, h: 24 },
+      { x: 2390, y: 320, w: 190, h: 24 },
     ];
 
     this.gems = [
       { x: 180, y: 450, points: 10, collected: false },
-      { x: 470, y: 375, points: 15, collected: false },
-      { x: 730, y: 300, points: 20, collected: false },
-      { x: 970, y: 385, points: 15, collected: false },
-      { x: 1240, y: 275, points: 25, collected: false },
-      { x: 1510, y: 355, points: 20, collected: false },
-      { x: 1785, y: 245, points: 30, collected: false },
-      { x: 2050, y: 335, points: 20, collected: false },
-      { x: 2320, y: 255, points: 35, collected: false },
+      { x: 470, y: 380, points: 15, collected: false },
+      { x: 730, y: 335, points: 20, collected: false },
+      { x: 1000, y: 385, points: 15, collected: false },
+      { x: 1280, y: 310, points: 25, collected: false },
+      { x: 1560, y: 360, points: 20, collected: false },
+      { x: 1840, y: 290, points: 30, collected: false },
+      { x: 2120, y: 340, points: 20, collected: false },
+      { x: 2390, y: 270, points: 35, collected: false },
     ];
 
     this.goal = {
@@ -144,19 +141,15 @@ export default class Game {
   }
 
   createPlayer() {
-    this.player = new Sprite(110, 462, 18, 18);
-    this.player.collider = "none";
-    this.player.rotationLock = true;
-    this.player.vel.x = 0;
-    this.player.vel.y = 0;
-    this.player.addAni("idle", this.assets.playerIdle);
-    this.player.addAni("run", this.assets.playerRun);
-    this.player.addAni("jump", this.assets.playerJump);
-    this.player.changeAni("idle");
-    this.player.ani.scale = 2.2;
-    this.player.layer = 10;
-    this.player.debug = false;
-    this.player.grounded = false;
+    this.player = {
+      x: 110,
+      y: 462,
+      w: 18,
+      h: 18,
+      vx: 0,
+      vy: 0,
+      grounded: false,
+    };
   }
 
   update() {
@@ -194,25 +187,25 @@ export default class Game {
     const runSpeed = 4.2;
 
     if (moveRight && !moveLeft) {
-      this.player.vel.x = runSpeed;
+      this.player.vx = runSpeed;
     } else if (moveLeft && !moveRight) {
-      this.player.vel.x = -runSpeed;
+      this.player.vx = -runSpeed;
     } else {
-      this.player.vel.x *= 0.82;
+      this.player.vx *= 0.82;
 
-      if (Math.abs(this.player.vel.x) < 0.08) {
-        this.player.vel.x = 0;
+      if (Math.abs(this.player.vx) < 0.08) {
+        this.player.vx = 0;
       }
     }
 
-    this.player.x += this.player.vel.x;
+    this.player.x += this.player.vx;
     this.player.x = constrain(this.player.x, 40, this.levelWidth - 40);
   }
 
   applyGravity() {
-    this.player.vel.y += 0.48;
-    this.player.vel.y = Math.min(this.player.vel.y, 12);
-    this.player.y += this.player.vel.y;
+    this.player.vy += 0.48;
+    this.player.vy = Math.min(this.player.vy, 12);
+    this.player.y += this.player.vy;
     this.player.grounded = false;
   }
 
@@ -220,27 +213,31 @@ export default class Game {
     const playerLeft = this.player.x - this.player.w / 2;
     const playerRight = this.player.x + this.player.w / 2;
     const playerBottom = this.player.y + this.player.h / 2;
-    const previousBottom = playerBottom - this.player.vel.y;
+    const previousBottom = playerBottom - this.player.vy;
+    let landingTop = null;
 
     for (const platform of this.platforms) {
       const left = platform.x - platform.w / 2;
       const right = platform.x + platform.w / 2;
       const top = platform.y - platform.h / 2;
 
-      const overlapsX = playerRight > left + 6 && playerLeft < right - 6;
-      const wasAbove = previousBottom <= top + 2;
-      const isCrossingTop = playerBottom >= top && playerBottom <= top + 22;
+      const overlapsX = playerRight > left + 2 && playerLeft < right - 2;
+      const wasAbove = previousBottom <= top + 1;
+      const crossedTop = playerBottom >= top;
 
-      if (overlapsX && wasAbove && isCrossingTop && this.player.vel.y >= 0) {
-        this.player.y = top - this.player.h / 2;
-        this.player.vel.y = 0;
-        this.player.grounded = true;
-        break;
+      if (overlapsX && wasAbove && crossedTop && this.player.vy >= 0) {
+        landingTop = landingTop === null ? top : Math.min(landingTop, top);
       }
     }
 
+    if (landingTop !== null) {
+      this.player.y = landingTop - this.player.h / 2;
+      this.player.vy = 0;
+      this.player.grounded = true;
+    }
+
     if (jumpPressed && !this.jumpPressedLastFrame && this.player.grounded) {
-      this.player.vel.y = -10.8;
+      this.player.vy = -10.8;
       this.player.grounded = false;
     }
   }
@@ -272,24 +269,18 @@ export default class Game {
 
   drawFrame() {
     background("#79b8ff");
-
-    if (this.player && this.isActive) {
-      this.updateCamera();
-    } else if (this.player) {
-      this.centerCameraOnStart();
-    }
+    this.updateCamera();
 
     this.drawSky();
     this.drawClouds();
     this.drawPlatforms();
     this.drawGems();
     this.drawGoalMarker();
+    this.drawPlayer();
 
     if (!this.player) return;
 
-    camera.off();
     this.drawOverlayText();
-    camera.on();
   }
 
   drawSky() {
@@ -335,7 +326,7 @@ export default class Game {
 
   drawPlatformTiles(platform) {
     const tileSize = 16;
-    const left = platform.x - platform.w / 2;
+    const left = this.toScreenX(platform.x - platform.w / 2);
     const top = platform.y - platform.h / 2;
     const cols = Math.round(platform.w / tileSize);
 
@@ -368,7 +359,7 @@ export default class Game {
 
       push();
       tint(255);
-      image(this.assets.gem, gem.x, gem.y, 27, 23);
+      image(this.assets.gem, this.toScreenX(gem.x), gem.y, 27, 23);
       pop();
     }
   }
@@ -380,14 +371,14 @@ export default class Game {
     rectMode(CENTER);
     noStroke();
     fill(71, 85, 105);
-    rect(this.goal.x, this.goal.y + 20, 8, this.goal.h);
+    rect(this.toScreenX(this.goal.x), this.goal.y + 20, 8, this.goal.h);
     fill("#fef08a");
     triangle(
-      this.goal.x + 4,
+      this.toScreenX(this.goal.x) + 4,
       this.goal.y - 55,
-      this.goal.x + 4,
+      this.toScreenX(this.goal.x) + 4,
       this.goal.y - 15,
-      this.goal.x + 42,
+      this.toScreenX(this.goal.x) + 42,
       this.goal.y - 35
     );
     pop();
@@ -403,7 +394,7 @@ export default class Game {
   ) {
     if (!img) return;
 
-    const offset = camera.x * parallax;
+    const offset = this.cameraX * parallax;
     const startX = -((offset % tileWidth) + tileWidth);
 
     push();
@@ -437,28 +428,23 @@ export default class Game {
   }
 
   updateCamera() {
-    const followStart = width * 0.55;
-
-    if (this.player.x <= followStart) {
-      camera.x = width / 2;
-      camera.y = height / 2;
+    if (!this.player) {
+      this.cameraX = 0;
       return;
     }
 
-    const targetX = constrain(
-      this.player.x + width * 0.08,
-      width / 2,
-      this.levelWidth - width / 2
+    const leftDeadZone = width * 0.38;
+    const targetLeft = constrain(
+      this.player.x - leftDeadZone,
+      0,
+      this.levelWidth - width
     );
 
-    camera.x = lerp(camera.x, targetX, 0.1);
-    camera.y = height / 2;
+    this.cameraX = lerp(this.cameraX, targetLeft, 0.12);
   }
 
   centerCameraOnStart() {
-    if (typeof camera === "undefined") return;
-    camera.x = width / 2;
-    camera.y = height / 2;
+    this.cameraX = 0;
   }
 
   handleResize() {
@@ -478,8 +464,8 @@ export default class Game {
   }
 
   updatePlayerAnimation(moveRight, moveLeft) {
-    const movingHorizontally = Math.abs(this.player.vel.x) > 0.25;
-    const clearlyAirborne = !this.player.grounded && Math.abs(this.player.vel.y) > 0.6;
+    const movingHorizontally = Math.abs(this.player.vx) > 0.25;
+    const clearlyAirborne = !this.player.grounded && Math.abs(this.player.vy) > 0.6;
 
     if (clearlyAirborne) {
       this.setPlayerAnimation("jump");
@@ -497,8 +483,6 @@ export default class Game {
   setPlayerAnimation(name) {
     if (this.playerState === name) return;
 
-    this.player.changeAni(name);
-    this.player.ani.scale = 2.2;
     this.playerState = name;
   }
 
@@ -506,8 +490,28 @@ export default class Game {
     this.isDying = true;
     this.deathTimer = 45;
     this.deathMessage = message;
-    this.player.vel.x = 0;
-    this.player.vel.y = 0;
+    this.player.vx = 0;
+    this.player.vy = 0;
     this.setPlayerAnimation("idle");
+  }
+
+  drawPlayer() {
+    if (!this.player) return;
+
+    const currentAni =
+      this.playerState === "run"
+        ? this.assets.playerRun
+        : this.playerState === "jump"
+          ? this.assets.playerJump
+          : this.assets.playerIdle;
+
+    if (!currentAni) return;
+
+    imageMode(CENTER);
+    animation(currentAni, this.toScreenX(this.player.x), this.player.y, 72, 70);
+  }
+
+  toScreenX(worldX) {
+    return worldX - this.cameraX;
   }
 }
