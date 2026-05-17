@@ -1,3 +1,5 @@
+import Game from "./Game.js";
+
 export default class App {
   constructor() {
     this.currentScreen = "start";
@@ -9,6 +11,12 @@ export default class App {
     this.finishButton = document.getElementById("finish-button");
     this.restartButton = document.getElementById("restart-button");
     this.finalScore = document.getElementById("final-score");
+    this.game = new Game({
+      containerId: "game-container",
+      onLevelComplete: (score) => {
+        this.finishGame(score);
+      },
+    });
   }
 
   init() {
@@ -30,15 +38,15 @@ export default class App {
 
   addEventListeners() {
     this.startButton?.addEventListener("click", () => {
-      this.showScreen("game");
+      this.startGame();
     });
 
     this.finishButton?.addEventListener("click", () => {
-      this.updateScore(0);
-      this.showScreen("score");
+      this.finishGame(this.game.score);
     });
 
     this.restartButton?.addEventListener("click", () => {
+      this.game.stop();
       this.updateScore(0);
       this.showScreen("start");
     });
@@ -46,14 +54,24 @@ export default class App {
     // tijdelijke testcontrols tot Teachable Machine is gekoppeld
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        this.showScreen("game");
+        this.startGame();
       }
 
       if (e.key === "Escape") {
-        this.updateScore(0);
-        this.showScreen("score");
+        this.finishGame(this.game.score);
       }
     });
+  }
+
+  startGame() {
+    this.showScreen("game");
+    this.game.start();
+  }
+
+  finishGame(score = 0) {
+    this.game.stop();
+    this.updateScore(score);
+    this.showScreen("score");
   }
 
   updateScore(score) {

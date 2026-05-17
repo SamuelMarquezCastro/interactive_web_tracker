@@ -27,10 +27,15 @@
 
 
         <section id="game-screen" class="screen">
-            <div class="overlay">
-                <h2>Game screen</h2>
-                <p>Hier komt de p5play game.</p>
-                <button id="finish-button">Ga naar score</button>
+            <div class="game-shell">
+                <div class="game-hud">
+                    <div>
+                        <h2>Prototype Level</h2>
+                        <p>Keyboard test for now: move with D or right arrow, jump with W, up arrow, or space.</p>
+                    </div>
+                    <button id="finish-button">Go to score</button>
+                </div>
+                <div id="game-container" aria-label="Game canvas"></div>
             </div>
         </section>
 
@@ -46,8 +51,9 @@
 
 
 
-    <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/p5play@3/p5play.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1/lib/p5.min.js"></script>
+    <script src="https://p5play.org/v3/planck.min.js"></script>
+    <script src="https://p5play.org/v3/p5play.js"></script>
     <script type="module" src="Main.js"></script>
 </body>
 
