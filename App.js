@@ -5,6 +5,10 @@ export default class App {
     this.startScreen = document.getElementById("start-screen");
     this.gameScreen = document.getElementById("game-screen");
     this.scoreScreen = document.getElementById("score-screen");
+    this.startButton = document.getElementById("start-button");
+    this.finishButton = document.getElementById("finish-button");
+    this.restartButton = document.getElementById("restart-button");
+    this.finalScore = document.getElementById("final-score");
   }
 
   init() {
@@ -25,15 +29,34 @@ export default class App {
   }
 
   addEventListeners() {
-    // tijdelijke test (later vervangen door clap)
+    this.startButton?.addEventListener("click", () => {
+      this.showScreen("game");
+    });
+
+    this.finishButton?.addEventListener("click", () => {
+      this.updateScore(0);
+      this.showScreen("score");
+    });
+
+    this.restartButton?.addEventListener("click", () => {
+      this.updateScore(0);
+      this.showScreen("start");
+    });
+
+    // tijdelijke testcontrols tot Teachable Machine is gekoppeld
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         this.showScreen("game");
       }
 
       if (e.key === "Escape") {
+        this.updateScore(0);
         this.showScreen("score");
       }
     });
+  }
+
+  updateScore(score) {
+    this.finalScore.textContent = score;
   }
 }
