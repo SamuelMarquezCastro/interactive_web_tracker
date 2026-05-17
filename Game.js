@@ -9,6 +9,9 @@ export default class Game {
     this.levelWidth = 2200;
     this.jumpPressedLastFrame = false;
     this.groundedFrames = 0;
+    this.isDying = false;
+    this.deathTimer = 0;
+    this.deathMessage = "";
     this.solids = [];
     this.gems = [];
     this.playerState = "idle";
@@ -35,8 +38,6 @@ export default class Game {
   preload() {
     this.assets.sky = loadImage("assets/Map/sunny-mountains-sky.png");
     this.assets.clouds = loadImage("assets/Map/clouds.png");
-    this.assets.backMountains = loadImage("assets/Map/back.png");
-    this.assets.middleMountains = loadImage("assets/Map/middle.png");
     this.assets.tileset = loadImage("assets/Map/tileset.png");
 
     this.assets.playerIdle = loadAnimation(
@@ -76,6 +77,8 @@ export default class Game {
 
   stop() {
     this.isActive = false;
+    this.isDying = false;
+    this.deathTimer = 0;
   }
 
   setup() {
@@ -96,6 +99,9 @@ export default class Game {
     this.gems = [];
     this.jumpPressedLastFrame = false;
     this.groundedFrames = 0;
+    this.isDying = false;
+    this.deathTimer = 0;
+    this.deathMessage = "";
     this.playerState = "idle";
     this.onScoreChange?.(this.score);
 
@@ -168,6 +174,16 @@ export default class Game {
   update() {
     if (!this.isActive || !this.player) return;
 
+    if (this.isDying) {
+      this.deathTimer -= 1;
+
+      if (this.deathTimer <= 0) {
+        this.resetLevel();
+      }
+
+      return;
+    }
+
     const moveRight = kb.pressing("d") || kb.pressing("right");
     const moveLeft = kb.pressing("a") || kb.pressing("left");
     const jumpPressed =
@@ -204,8 +220,8 @@ export default class Game {
     this.updatePlayerAnimation(moveRight, moveLeft);
     this.collectGems();
 
-    if (this.player.y > 700) {
-      this.resetLevel();
+    if (this.player.y > height + 160) {
+      this.triggerDeath("You fell off the map!");
     }
 
     if (this.player.overlapping(this.goal)) {
@@ -235,23 +251,30 @@ export default class Game {
 
   drawBackdrop() {
     imageMode(CORNER);
+    this.drawSkyGradient();
+    this.drawSingleBackground();
+    this.drawTiledLayer(this.assets.clouds, 54, 280, 86, 0.04, 0.78);
+    this.drawTiledLayer(this.assets.clouds, 120, 220, 68, 0.08, 0.45);
+  }
 
-    this.drawTiledLayer(this.assets.sky, 0, width, height, 0);
-    this.drawTiledLayer(this.assets.clouds, 36, 360, 112, 0.08);
-    this.drawTiledLayer(this.assets.backMountains, height - 245, 340, 210, 0.16);
-    this.drawTiledLayer(
-      this.assets.middleMountains,
-      height - 205,
-      190,
-      205,
-      0.24
-    );
+  drawSkyGradient() {
+    noFill();
 
-    noStroke();
-    fill(76, 201, 240, 120);
-    rect(0, height - 86, width, 86);
-    fill(147, 197, 253, 105);
-    rect(0, height - 112, width, 20);
+    for (let y = 0; y < height; y += 2) {
+      const blend = y / height;
+      const r = lerp(55, 182, blend);
+      const g = lerp(115, 228, blend);
+      const b = lerp(248, 255, blend);
+
+      stroke(r, g, b);
+      line(0, y, width, y);
+    }
+  }
+
+  drawSingleBackground() {
+    if (!this.assets.sky) return;
+
+    this.drawTiledLayer(this.assets.sky, height - 340, 420, 340, 0.14, 0.92);
   }
 
   drawPlatforms() {
@@ -318,16 +341,22 @@ export default class Game {
     drawY = 0,
     tileWidth = width,
     tileHeight = height,
-    parallax = 0
+    parallax = 0,
+    opacity = 1
   ) {
     if (!img) return;
 
     const offset = camera.x * parallax;
     const startX = -((offset % tileWidth) + tileWidth);
 
+    push();
+    tint(255, 255 * opacity);
+
     for (let x = startX; x < width + tileWidth; x += tileWidth) {
       image(img, x, drawY, tileWidth, tileHeight);
     }
+
+    pop();
   }
 
   drawOverlayText() {
@@ -337,13 +366,25 @@ export default class Game {
     fill("#ffffff");
     textSize(16);
     textAlign(LEFT, TOP);
+    if (this.isDying) {
+      text(this.deathMessage, 30, 34);
+      text("Restarting the level...", 30, 60);
+      return;
+    }
+
     text("Collect the gems and reach the yellow marker.", 30, 30);
     text("Easy gems are low. The higher gems are worth more points.", 30, 52);
     text(`Current score: ${this.score}`, 30, 74);
   }
 
   updateCamera() {
-    camera.x = constrain(this.player.x, width / 2, this.levelWidth - width / 2);
+    const targetX = constrain(
+      this.player.x + width * 0.15,
+      width / 2,
+      this.levelWidth - width / 2
+    );
+
+    camera.x = lerp(camera.x, targetX, 0.12);
     camera.y = height / 2;
   }
 
@@ -393,6 +434,15 @@ export default class Game {
     this.player.changeAni(name);
     this.player.ani.scale = scale;
     this.playerState = name;
+  }
+
+  triggerDeath(message) {
+    this.isDying = true;
+    this.deathTimer = 45;
+    this.deathMessage = message;
+    this.player.vel.x = 0;
+    this.player.vel.y = 0;
+    this.setPlayerAnimation("idle", 2.2);
   }
 
   collectGems() {
