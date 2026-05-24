@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <title>Mountain Quest</title>
 
@@ -14,13 +17,14 @@
     <main>
 
         <section id="start-screen" class="screen active">
-            <div class="overlay">
-                <h1>Mountain Quest</h1>
-                <div class="instructions">
-                    <p>Press the button once to enable your microphone</p>
-                    <p>Snap to start</p>
-                    <p>Say "a" to run</p>
-                    <p>Clap or snap to jump</p>
+            <div class="overlay start-panel">
+                <h1 class="sr-only">Mountain Quest</h1>
+                <p class="screen-kicker">One level. Voice-controlled. Gem chasing.</p>
+                <div class="instructions start-instructions">
+                    <p>Enable your microphone once.</p>
+                    <p>Snap to start the run.</p>
+                    <p>Say “A” to move forward.</p>
+                    <p>Clap or snap to jump.</p>
                 </div>
                 <div class="score-summary">
                     <p>Last score: <span id="start-last-score">0</span></p>
@@ -28,7 +32,7 @@
                 </div>
                 <p id="audio-status" class="audio-status">Microphone not enabled yet.</p>
                 <p id="audio-detail" class="audio-detail">After mic access is allowed, snap to begin.</p>
-                <button id="start-button">Enable microphone</button>
+                <button id="start-button" class="primary-button">Enable microphone</button>
             </div>
         </section>
 
@@ -37,24 +41,39 @@
             <div class="game-shell">
                 <div class="game-hud">
                     <div>
-                        <h2>Sky Run</h2>
-                        <p>Snap starts. Say "A" to move right. Clap or snap to jump. Keyboard fallback still works.</p>
+                        <p class="screen-kicker game-kicker">Sky Run</p>
+                        <h2>Chase gems across the clouds</h2>
+                        <p>Snap starts. Say "A" to move right. Clap or snap to jump.</p>
                     </div>
-                    <p id="audio-live" class="audio-live">Mic: off</p>
-                    <p class="score-pill">Score: <span id="hud-score">0</span></p>
-                    <button id="finish-button">Go to score</button>
+                    <div class="game-status">
+                        <p id="audio-live" class="audio-live">Mic: off</p>
+                        <p class="score-pill">Score: <span id="hud-score">0</span></p>
+                        <button id="finish-button" class="secondary-button">Go to score</button>
+                    </div>
                 </div>
-                <div id="game-container" aria-label="Game canvas"></div>
+                <div class="game-frame">
+                    <div id="game-container" aria-label="Game canvas"></div>
+                </div>
             </div>
         </section>
 
 
         <section id="score-screen" class="screen ">
-            <div class="overlay">
-                <h2>Congratulations!</h2>
-                <p>Your score: <span id="final-score">0</span></p>
-                <p>Best score: <span id="best-score">0</span></p>
-                <button id="restart-button">Restart</button>
+            <div class="overlay score-panel">
+                <h2 class="sr-only">Level Complete</h2>
+                <p class="screen-kicker score-kicker">Run complete</p>
+                <div class="result-grid">
+                    <div class="result-row">
+                        <span class="result-label">This run</span>
+                        <span class="result-value" id="final-score">0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Best score</span>
+                        <span class="result-value" id="best-score">0</span>
+                    </div>
+                </div>
+                <p class="score-message">Snap back in and try to beat your best route.</p>
+                <button id="restart-button" class="primary-button">Play again</button>
             </div>
         </section>
     </main>
