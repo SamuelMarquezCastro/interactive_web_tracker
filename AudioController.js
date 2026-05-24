@@ -105,18 +105,25 @@ export default class AudioController {
     const normalized = top.label.toLowerCase();
     const scoreGap = top.score - (second?.score ?? 0);
     const isConfident = scoreGap >= this.minConfidenceGap;
+    const debug = this.formatDebug(top, second);
 
     if (normalized === "background noise" && top.score >= this.thresholds.background) {
-      this.emitStatus("listening", "Listening for snap, clap, or A...");
+      this.emitStatus("listening", "Listening for snap, clap, or A...", { debug });
       return;
     }
 
     if (!isConfident) {
-      this.emitStatus("listening", "Sound was too unclear. Try a cleaner clap, snap, or A.");
+      this.emitStatus(
+        "listening",
+        "Sound was too unclear. Try a cleaner clap, snap, or A.",
+        { debug }
+      );
       return;
     }
 
-    this.emitStatus("hearing", `${top.label} ${Math.round(top.score * 100)}%`);
+    this.emitStatus("hearing", `${top.label} ${Math.round(top.score * 100)}%`, {
+      debug,
+    });
 
     if (normalized === "a" && top.score >= this.thresholds.run) {
       this.onCommand?.({ type: "run", confidence: top.score });
@@ -143,14 +150,27 @@ export default class AudioController {
       return;
     }
 
-    this.emitStatus("listening", "Listening for snap, clap, or A...");
+    this.emitStatus("listening", "Listening for snap, clap, or A...", { debug });
   }
 
   readyFor(command) {
     return Date.now() - this.lastCommandTimes[command] > this.cooldowns[command];
   }
 
-  emitStatus(state, detail) {
-    this.onStatusChange?.({ state, detail });
+  formatDebug(top, second) {
+    if (!top) {
+      return "Waiting for audio...";
+    }
+
+    const lead = `${top.label} ${Math.round(top.score * 100)}%`;
+    const runnerUp = second
+      ? ` · next ${second.label} ${Math.round(second.score * 100)}%`
+      : "";
+
+    return `Heard ${lead}${runnerUp}`;
+  }
+
+  emitStatus(state, detail, extras = {}) {
+    this.onStatusChange?.({ state, detail, ...extras });
   }
 }

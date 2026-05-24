@@ -33,6 +33,8 @@ export default class Game {
     this.jumpBufferFramesMax = 8;
     this.coyoteFrames = 0;
     this.jumpBufferFrames = 0;
+    this.feedbackPopups = [];
+    this.screenFlash = null;
     this.cloudLayers = [
       { y: 54, w: 320, h: 96, speed: 0.024, alpha: 0.3 },
       { y: 118, w: 260, h: 80, speed: 0.055, alpha: 0.18 },
@@ -119,6 +121,8 @@ export default class Game {
     this.playerState = "idle";
     this.coyoteFrames = 0;
     this.jumpBufferFrames = 0;
+    this.feedbackPopups = [];
+    this.screenFlash = null;
 
     this.buildLevel();
     this.createPlayer();
@@ -315,6 +319,8 @@ export default class Game {
         gem.collected = true;
         this.score += gem.points;
         this.onScoreChange?.(this.score);
+        this.addFeedbackPopup(`+${gem.points}`, gem.x, gem.y - 10, "#ffe27a");
+        this.triggerFlash("rgba(255, 227, 120, 0.22)", 12);
       }
     }
   }
@@ -362,6 +368,7 @@ export default class Game {
   drawFrame() {
     background("#79b8ff");
     this.updateCamera();
+    this.updateFeedbackEffects();
 
     this.drawSky();
     this.drawClouds();
@@ -369,6 +376,8 @@ export default class Game {
     this.drawGems();
     this.drawGoalMarker();
     this.drawPlayer();
+    this.drawFeedbackPopups();
+    this.drawScreenFlash();
 
     if (!this.player) return;
 
@@ -518,6 +527,80 @@ export default class Game {
     text(`Current score: ${this.score}`, 34, 76);
   }
 
+  updateFeedbackEffects() {
+    this.feedbackPopups = this.feedbackPopups
+      .map((popup) => ({
+        ...popup,
+        y: popup.y - 0.7,
+        life: popup.life - 1,
+      }))
+      .filter((popup) => popup.life > 0);
+
+    if (this.screenFlash) {
+      this.screenFlash.life -= 1;
+
+      if (this.screenFlash.life <= 0) {
+        this.screenFlash = null;
+      }
+    }
+  }
+
+  addFeedbackPopup(text, worldX, worldY, color = "#ffffff") {
+    this.feedbackPopups.push({
+      text,
+      x: worldX,
+      y: worldY,
+      color,
+      life: 36,
+    });
+  }
+
+  triggerFlash(color, life = 10) {
+    this.screenFlash = { color, life, maxLife: life };
+  }
+
+  drawFeedbackPopups() {
+    if (!this.feedbackPopups.length) return;
+
+    push();
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    textStyle(BOLD);
+
+    for (const popup of this.feedbackPopups) {
+      const alpha = map(popup.life, 0, 36, 0, 255);
+      fill(red(color(popup.color)), green(color(popup.color)), blue(color(popup.color)), alpha);
+      stroke(18, 16, 38, alpha * 0.75);
+      strokeWeight(4);
+      text(popup.text, this.toScreenX(popup.x), popup.y);
+    }
+
+    pop();
+  }
+
+  drawScreenFlash() {
+    if (!this.screenFlash) return;
+
+    const alpha = map(
+      this.screenFlash.life,
+      0,
+      this.screenFlash.maxLife,
+      0,
+      255
+    );
+
+    push();
+    noStroke();
+    fill(
+      red(color(this.screenFlash.color)),
+      green(color(this.screenFlash.color)),
+      blue(color(this.screenFlash.color)),
+      alpha
+    );
+    rect(0, 0, width, height);
+    pop();
+  }
+
   updateCamera() {
     if (!this.player) {
       this.cameraX = 0;
@@ -587,6 +670,8 @@ export default class Game {
     this.deathMessage = message;
     this.player.vx = 0;
     this.player.vy = 0;
+    this.addFeedbackPopup("- run lost", this.player.x, this.player.y - 28, "#ffb4b4");
+    this.triggerFlash("rgba(255, 84, 84, 0.28)", 18);
     this.setPlayerAnimation("idle");
   }
 

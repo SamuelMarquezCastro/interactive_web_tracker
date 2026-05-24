@@ -26,6 +26,7 @@ export default class App {
     this.audioStatus = document.getElementById("audio-status");
     this.audioDetail = document.getElementById("audio-detail");
     this.audioLive = document.getElementById("audio-live");
+    this.audioDebug = document.getElementById("audio-debug");
     this.game = new Game({
       containerId: "game-container",
       getInputState: () => this.consumeGameInput(),
@@ -180,6 +181,7 @@ export default class App {
       this.audioEnabled || status.state === "hearing"
         ? "Snap starts. In-game: say A to run. Clap or snap to jump."
         : "Keyboard fallback stays available even without microphone input.";
+    this.audioDebug.textContent = status.debug || "Heard nothing yet.";
     this.audioLive.textContent = `${stateLabel[status.state] || "Mic"}${
       status.state === "hearing" ? ` · ${status.detail}` : ""
     }`;
