@@ -205,7 +205,8 @@ export default class Game {
       this.deathTimer -= 1;
 
       if (this.deathTimer <= 0) {
-        this.resetLevel();
+        this.isActive = false;
+        this.onRunEnd?.({ score: this.score, reason: "death" });
       }
 
       return;
@@ -509,6 +510,11 @@ export default class Game {
   }
 
   drawOverlayText() {
+    if (this.isDying) {
+      this.drawDeathOverlay();
+      return;
+    }
+
     fill(15, 23, 42, 185);
     rect(18, 18, 410, 92, 14);
 
@@ -516,15 +522,35 @@ export default class Game {
     textSize(16);
     textAlign(LEFT, TOP);
 
-    if (this.isDying) {
-      text(this.deathMessage, 34, 36);
-      text("Restarting the level...", 34, 64);
-      return;
-    }
-
     text("Follow the sky route and dodge the spikes.", 34, 32);
     text("Snap starts. Say A to run. Clap or snap to jump.", 34, 54);
     text(`Current score: ${this.score}`, 34, 76);
+  }
+
+  drawDeathOverlay() {
+    push();
+    rectMode(CENTER);
+    noStroke();
+    fill(12, 10, 29, 205);
+    rect(width / 2, height / 2, 360, 132, 24);
+
+    stroke(255, 214, 122, 70);
+    strokeWeight(1.5);
+    noFill();
+    rect(width / 2, height / 2, 360, 132, 24);
+
+    noStroke();
+    fill("#fff1e6");
+    textAlign(CENTER, CENTER);
+    textSize(28);
+    textStyle(BOLD);
+    text(this.deathMessage, width / 2, height / 2 - 20);
+
+    textSize(16);
+    textStyle(NORMAL);
+    fill("#ffd7c9");
+    text("Returning to the end screen...", width / 2, height / 2 + 20);
+    pop();
   }
 
   updateFeedbackEffects() {
@@ -664,9 +690,8 @@ export default class Game {
   triggerDeath(message) {
     if (this.isDying) return;
 
-    this.onRunEnd?.(this.score);
     this.isDying = true;
-    this.deathTimer = 45;
+    this.deathTimer = 72;
     this.deathMessage = message;
     this.player.vx = 0;
     this.player.vy = 0;

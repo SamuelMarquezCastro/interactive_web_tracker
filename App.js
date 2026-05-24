@@ -20,6 +20,8 @@ export default class App {
     this.restartButton = document.getElementById("restart-button");
     this.finalScore = document.getElementById("final-score");
     this.bestScore = document.getElementById("best-score");
+    this.scoreKicker = document.getElementById("score-kicker");
+    this.scoreMessage = document.getElementById("score-message");
     this.hudScore = document.getElementById("hud-score");
     this.startLastScore = document.getElementById("start-last-score");
     this.startBestScore = document.getElementById("start-best-score");
@@ -31,10 +33,10 @@ export default class App {
       containerId: "game-container",
       getInputState: () => this.consumeGameInput(),
       onLevelComplete: (score) => {
-        this.finishGame(score);
+        this.finishGame(score, "win");
       },
-      onRunEnd: (score) => {
-        this.saveScores(score);
+      onRunEnd: ({ score, reason }) => {
+        this.finishGame(score, reason);
       },
       onScoreChange: (score) => {
         this.updateScore(score);
@@ -75,7 +77,7 @@ export default class App {
     });
 
     this.finishButton?.addEventListener("click", () => {
-      this.finishGame(this.game.score);
+      this.finishGame(this.game.score, "quit");
     });
 
     this.restartButton?.addEventListener("click", () => {
@@ -91,7 +93,7 @@ export default class App {
       }
 
       if (e.key === "Escape") {
-        this.finishGame(this.game.score);
+        this.finishGame(this.game.score, "quit");
       }
     });
   }
@@ -102,16 +104,34 @@ export default class App {
     this.game.start();
   }
 
-  finishGame(score = 0) {
+  finishGame(score = 0, reason = "win") {
     this.game.stop();
     this.saveScores(score);
     this.updateScore(score);
+    this.updateScoreScreen(reason);
     this.showScreen("score");
   }
 
   updateScore(score) {
     this.finalScore.textContent = score;
     this.hudScore.textContent = score;
+  }
+
+  updateScoreScreen(reason) {
+    if (reason === "death") {
+      this.scoreKicker.textContent = "Run over";
+      this.scoreMessage.textContent = "You fell. Snap back in and beat this route.";
+      return;
+    }
+
+    if (reason === "quit") {
+      this.scoreKicker.textContent = "Run paused";
+      this.scoreMessage.textContent = "Your current score is saved. Jump back in anytime.";
+      return;
+    }
+
+    this.scoreKicker.textContent = "Run complete";
+    this.scoreMessage.textContent = "Snap back in and try to beat your best route.";
   }
 
   async enableAudio() {
