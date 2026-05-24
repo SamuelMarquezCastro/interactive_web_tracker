@@ -7,8 +7,8 @@ export default class App {
     this.voiceRunUntil = 0;
     this.voiceJumpQueued = false;
     this.audioEnabled = false;
-    this.voiceRunHoldMs = 480;
-    this.jumpRunCarryMs = 320;
+    this.voiceRunHoldMs = 220;
+    this.jumpRunCarryMs = 260;
 
     this.startScreen = document.getElementById("start-screen");
     this.gameScreen = document.getElementById("game-screen");
@@ -176,10 +176,10 @@ export default class App {
 
   queueVoiceJump() {
     this.voiceJumpQueued = true;
-
-    if (Date.now() < this.voiceRunUntil) {
-      this.voiceRunUntil = Date.now() + this.jumpRunCarryMs;
-    }
+    this.voiceRunUntil = Math.max(
+      this.voiceRunUntil,
+      Date.now() + this.jumpRunCarryMs
+    );
   }
 
   consumeGameInput() {
