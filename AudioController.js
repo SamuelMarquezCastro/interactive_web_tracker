@@ -12,6 +12,13 @@ export default class AudioController {
       clap: 550,
       snap: 700,
     };
+    this.thresholds = {
+      run: 0.82,
+      jump: 0.9,
+      snap: 0.92,
+      background: 0.72,
+    };
+    this.minConfidenceGap = 0.18;
   }
 
   async enable() {
@@ -91,28 +98,52 @@ export default class AudioController {
 
     entries.sort((a, b) => b.score - a.score);
     const top = entries[0];
+    const second = entries[1];
 
     if (!top) return;
 
+    const normalized = top.label.toLowerCase();
+    const scoreGap = top.score - (second?.score ?? 0);
+    const isConfident = scoreGap >= this.minConfidenceGap;
+
+    if (normalized === "background noise" && top.score >= this.thresholds.background) {
+      this.emitStatus("listening", "Listening for snap, clap, or A...");
+      return;
+    }
+
+    if (!isConfident) {
+      this.emitStatus("listening", "Sound was too unclear. Try a cleaner clap, snap, or A.");
+      return;
+    }
+
     this.emitStatus("hearing", `${top.label} ${Math.round(top.score * 100)}%`);
 
-    const normalized = top.label.toLowerCase();
-
-    if (normalized === "a" && top.score > 0.75) {
+    if (normalized === "a" && top.score >= this.thresholds.run) {
       this.onCommand?.({ type: "run", confidence: top.score });
       return;
     }
 
-    if (normalized === "clap" && top.score > 0.82 && this.readyFor("clap")) {
+    if (
+      normalized === "clap" &&
+      top.score >= this.thresholds.jump &&
+      this.readyFor("clap")
+    ) {
       this.lastCommandTimes.clap = Date.now();
       this.onCommand?.({ type: "jump", confidence: top.score });
       return;
     }
 
-    if (normalized === "snap" && top.score > 0.82 && this.readyFor("snap")) {
+    if (
+      normalized === "snap" &&
+      top.score >= this.thresholds.snap &&
+      this.readyFor("snap")
+    ) {
       this.lastCommandTimes.snap = Date.now();
       this.onCommand?.({ type: "snap", confidence: top.score });
+      return;
     }
+
+    this.emitStatus("listening", "Listening for snap, clap, or A...");
   }
 
   readyFor(command) {

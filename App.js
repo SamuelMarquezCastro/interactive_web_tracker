@@ -171,7 +171,7 @@ export default class App {
       loading: "Mic: loading",
       arming: "Mic: permission",
       listening: "Mic: listening",
-      hearing: "Mic: active",
+      hearing: "Mic: command",
       error: "Mic: error",
     };
 
