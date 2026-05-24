@@ -1,8 +1,15 @@
 export default class Game {
-  constructor({ containerId, onLevelComplete, onScoreChange, getInputState }) {
+  constructor({
+    containerId,
+    onLevelComplete,
+    onScoreChange,
+    onRunEnd,
+    getInputState,
+  }) {
     this.containerId = containerId;
     this.onLevelComplete = onLevelComplete;
     this.onScoreChange = onScoreChange;
+    this.onRunEnd = onRunEnd;
     this.getInputState = getInputState;
     this.isInitialized = false;
     this.isActive = false;
@@ -572,6 +579,9 @@ export default class Game {
   }
 
   triggerDeath(message) {
+    if (this.isDying) return;
+
+    this.onRunEnd?.(this.score);
     this.isDying = true;
     this.deathTimer = 45;
     this.deathMessage = message;

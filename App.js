@@ -32,6 +32,9 @@ export default class App {
       onLevelComplete: (score) => {
         this.finishGame(score);
       },
+      onRunEnd: (score) => {
+        this.saveScores(score);
+      },
       onScoreChange: (score) => {
         this.updateScore(score);
       },
