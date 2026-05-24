@@ -3,12 +3,14 @@ import Game from "./Game.js";
 
 export default class App {
   constructor() {
+    this.storageKey = "mountain-quest-scores";
     this.currentScreen = "start";
     this.voiceRunUntil = 0;
     this.voiceJumpQueued = false;
     this.audioEnabled = false;
     this.voiceRunHoldMs = 220;
     this.jumpRunCarryMs = 430;
+    this.savedScores = this.loadSavedScores();
 
     this.startScreen = document.getElementById("start-screen");
     this.gameScreen = document.getElementById("game-screen");
@@ -17,7 +19,10 @@ export default class App {
     this.finishButton = document.getElementById("finish-button");
     this.restartButton = document.getElementById("restart-button");
     this.finalScore = document.getElementById("final-score");
+    this.bestScore = document.getElementById("best-score");
     this.hudScore = document.getElementById("hud-score");
+    this.startLastScore = document.getElementById("start-last-score");
+    this.startBestScore = document.getElementById("start-best-score");
     this.audioStatus = document.getElementById("audio-status");
     this.audioDetail = document.getElementById("audio-detail");
     this.audioLive = document.getElementById("audio-live");
@@ -42,6 +47,8 @@ export default class App {
   }
 
   init() {
+    this.renderStoredScores();
+    this.updateScore(this.savedScores.lastScore);
     this.showScreen("start");
     this.addEventListeners();
   }
@@ -93,6 +100,7 @@ export default class App {
 
   finishGame(score = 0) {
     this.game.stop();
+    this.saveScores(score);
     this.updateScore(score);
     this.showScreen("score");
   }
@@ -190,5 +198,46 @@ export default class App {
       run: Date.now() < this.voiceRunUntil,
       jump: jumpQueued,
     };
+  }
+
+  loadSavedScores() {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+
+      if (!stored) {
+        return { lastScore: 0, bestScore: 0 };
+      }
+
+      const parsed = JSON.parse(stored);
+
+      return {
+        lastScore: Number.isFinite(parsed?.lastScore) ? parsed.lastScore : 0,
+        bestScore: Number.isFinite(parsed?.bestScore) ? parsed.bestScore : 0,
+      };
+    } catch (error) {
+      console.warn("Could not read saved scores.", error);
+      return { lastScore: 0, bestScore: 0 };
+    }
+  }
+
+  saveScores(score) {
+    this.savedScores = {
+      lastScore: score,
+      bestScore: Math.max(this.savedScores.bestScore, score),
+    };
+
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.savedScores));
+    } catch (error) {
+      console.warn("Could not save scores.", error);
+    }
+
+    this.renderStoredScores();
+  }
+
+  renderStoredScores() {
+    this.bestScore.textContent = this.savedScores.bestScore;
+    this.startLastScore.textContent = this.savedScores.lastScore;
+    this.startBestScore.textContent = this.savedScores.bestScore;
   }
 }

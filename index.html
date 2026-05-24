@@ -22,6 +22,10 @@
                     <p>Say "a" to run</p>
                     <p>Clap or snap to jump</p>
                 </div>
+                <div class="score-summary">
+                    <p>Last score: <span id="start-last-score">0</span></p>
+                    <p>Best score: <span id="start-best-score">0</span></p>
+                </div>
                 <p id="audio-status" class="audio-status">Microphone not enabled yet.</p>
                 <p id="audio-detail" class="audio-detail">After mic access is allowed, snap to begin.</p>
                 <button id="start-button">Enable microphone</button>
@@ -49,6 +53,7 @@
             <div class="overlay">
                 <h2>Congratulations!</h2>
                 <p>Your score: <span id="final-score">0</span></p>
+                <p>Best score: <span id="best-score">0</span></p>
                 <button id="restart-button">Restart</button>
             </div>
         </section>

@@ -73,6 +73,22 @@
     font-weight: bold;
   }
 
+  .score-summary {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0 0 1.4rem;
+    flex-wrap: wrap;
+  }
+
+  .score-summary p {
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-weight: 700;
+  }
+
   .audio-status {
     margin: 0 0 0.5rem;
     font-size: 1rem;
