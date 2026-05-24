@@ -19,9 +19,12 @@ export default class Game {
     this.deathTimer = 0;
     this.deathMessage = "";
     this.cameraX = 0;
+    this.platformTileSize = 52;
+    this.playerBody = { w: 20, h: 18 };
+    this.playerArt = { w: 56, h: 54, yOffset: 16 };
     this.cloudLayers = [
-      { y: 58, w: 240, h: 74, speed: 0.03, alpha: 0.4 },
-      { y: 118, w: 200, h: 60, speed: 0.07, alpha: 0.22 },
+      { y: 54, w: 320, h: 96, speed: 0.024, alpha: 0.3 },
+      { y: 118, w: 260, h: 80, speed: 0.055, alpha: 0.18 },
     ];
   }
 
@@ -110,46 +113,71 @@ export default class Game {
   }
 
   buildLevel() {
+    const t = this.platformTileSize;
+
     this.platforms = [
-      { x: 220, y: 540, w: 240, h: 32 },
-      { x: 560, y: 470, w: 120, h: 32 },
-      { x: 880, y: 555, w: 280, h: 32, spikes: [{ x: 0, w: 96 }] },
-      { x: 1250, y: 450, w: 120, h: 32 },
-      { x: 1590, y: 370, w: 240, h: 32, spikes: [{ x: 80, w: 80 }] },
-      { x: 1990, y: 525, w: 160, h: 32 },
-      { x: 2310, y: 430, w: 120, h: 32 },
-      { x: 2660, y: 330, w: 240, h: 32, spikes: [{ x: 40, w: 120 }] },
-      { x: 3040, y: 440, w: 120, h: 32 },
-      { x: 3400, y: 330, w: 200, h: 32 },
+      this.makePlatform(260, 560, 5),
+      this.makePlatform(640, 486, 3),
+      this.makePlatform(960, 426, 4),
+      this.makePlatform(1350, 544, 6, [{ tile: 2, tilesWide: 2 }]),
+      this.makePlatform(1775, 456, 3),
+      this.makePlatform(2085, 384, 3),
+      this.makePlatform(2450, 470, 5, [{ tile: 1, tilesWide: 3 }]),
+      this.makePlatform(2860, 348, 3),
+      this.makePlatform(3190, 440, 4),
+      this.makePlatform(3580, 338, 5),
+      this.makePlatform(3960, 270, 3),
     ];
 
     this.gems = [
-      { x: 220, y: 480, points: 10, collected: false },
-      { x: 560, y: 408, points: 15, collected: false },
-      { x: 1250, y: 388, points: 20, collected: false },
-      { x: 1990, y: 463, points: 15, collected: false },
-      { x: 2310, y: 368, points: 25, collected: false },
-      { x: 3040, y: 378, points: 30, collected: false },
-      { x: 3400, y: 268, points: 40, collected: false },
+      { x: 260, y: 486, points: 10, collected: false },
+      { x: 640, y: 412, points: 10, collected: false },
+      { x: 960, y: 352, points: 15, collected: false },
+      { x: 1180, y: 300, points: 25, collected: false },
+      { x: 1775, y: 382, points: 15, collected: false },
+      { x: 2085, y: 304, points: 20, collected: false },
+      { x: 2860, y: 270, points: 25, collected: false },
+      { x: 3420, y: 260, points: 30, collected: false },
+      { x: 3960, y: 194, points: 40, collected: false },
     ];
 
     this.goal = {
-      x: 3660,
-      y: 268,
+      x: 4230,
+      y: 198,
       w: 40,
       h: 150,
     };
+
+    this.levelWidth = 4500;
   }
 
   createPlayer() {
+    const startPlatform = this.platforms[0];
+    const spawnTop = startPlatform.y - startPlatform.h / 2;
+
     this.player = {
-      x: 220,
-      y: 506,
-      w: 18,
-      h: 16,
+      x: startPlatform.x - startPlatform.w / 2 + this.platformTileSize * 1.4,
+      y: spawnTop - this.playerBody.h / 2,
+      w: this.playerBody.w,
+      h: this.playerBody.h,
       vx: 0,
       vy: 0,
       grounded: false,
+    };
+  }
+
+  makePlatform(x, y, tilesWide, spikeTiles = []) {
+    const spikes = spikeTiles.map((spike) => ({
+      x: spike.tile * this.platformTileSize,
+      w: spike.tilesWide * this.platformTileSize,
+    }));
+
+    return {
+      x,
+      y,
+      w: tilesWide * this.platformTileSize,
+      h: this.platformTileSize,
+      spikes,
     };
   }
 
@@ -207,8 +235,8 @@ export default class Game {
   }
 
   applyGravity() {
-    this.player.vy += 0.48;
-    this.player.vy = Math.min(this.player.vy, 12);
+    this.player.vy += 0.5;
+    this.player.vy = Math.min(this.player.vy, 13);
     this.player.y += this.player.vy;
     this.player.grounded = false;
   }
@@ -225,9 +253,10 @@ export default class Game {
       const right = platform.x + platform.w / 2;
       const top = platform.y - platform.h / 2;
 
-      const overlapsX = playerRight > left + 4 && playerLeft < right - 4;
-      const wasAbove = previousBottom <= top + 8;
-      const crossedTop = playerBottom >= top - 4;
+      const landingWindow = Math.max(12, Math.abs(this.player.vy) + 6);
+      const overlapsX = playerRight > left + 8 && playerLeft < right - 8;
+      const wasAbove = previousBottom <= top + landingWindow;
+      const crossedTop = playerBottom >= top - 6;
 
       if (overlapsX && wasAbove && crossedTop && this.player.vy >= 0) {
         landingTop = landingTop === null ? top : Math.min(landingTop, top);
@@ -241,7 +270,7 @@ export default class Game {
     }
 
     if (jumpPressed && !this.jumpPressedLastFrame && this.player.grounded) {
-      this.player.vy = -10.8;
+      this.player.vy = -11.2;
       this.player.grounded = false;
     }
   }
@@ -319,7 +348,7 @@ export default class Game {
 
   drawSky() {
     if (this.assets.sky) {
-      this.drawTiledLayer(this.assets.sky, 0, 320, height, 0.05, 1);
+      this.drawTiledLayer(this.assets.sky, 0, 420, height, 0.04, 1);
     }
   }
 
@@ -346,9 +375,9 @@ export default class Game {
   drawPlatform(platform) {
     if (!this.assets.platform) return;
 
-    const tileSize = 40;
+    const tileSize = this.platformTileSize;
     const left = this.toScreenX(platform.x - platform.w / 2);
-    const top = platform.y - platform.h / 2;
+    const top = platform.y - tileSize / 2;
     const cols = Math.round(platform.w / tileSize);
 
     imageMode(CORNER);
@@ -362,19 +391,21 @@ export default class Game {
     if (!this.assets.spikes || !platform.spikes?.length) return;
 
     const platformLeft = this.toScreenX(platform.x - platform.w / 2);
-    const drawY = platform.y - platform.h / 2 - 20;
+    const spikeHeight = 24;
+    const spikeWidth = 36;
+    const drawY = platform.y - this.platformTileSize / 2 - spikeHeight + 6;
     imageMode(CORNER);
 
     for (const spike of platform.spikes) {
-      const cols = Math.round(spike.w / 30);
+      const cols = Math.round(spike.w / spikeWidth);
 
       for (let col = 0; col < cols; col += 1) {
         image(
           this.assets.spikes,
-          platformLeft + spike.x + col * 30,
+          platformLeft + spike.x + col * spikeWidth,
           drawY,
-          30,
-          20
+          spikeWidth,
+          spikeHeight
         );
       }
     }
@@ -390,7 +421,7 @@ export default class Game {
 
       push();
       tint(255);
-      image(this.assets.gem, this.toScreenX(gem.x), gem.y, 27, 23);
+      image(this.assets.gem, this.toScreenX(gem.x), gem.y, 34, 30);
       pop();
     }
   }
@@ -441,21 +472,21 @@ export default class Game {
 
   drawOverlayText() {
     fill(15, 23, 42, 185);
-    rect(16, 16, 360, 88, 12);
+    rect(18, 18, 410, 92, 14);
 
     fill("#ffffff");
     textSize(16);
     textAlign(LEFT, TOP);
 
     if (this.isDying) {
-      text(this.deathMessage, 30, 34);
-      text("Restarting the level...", 30, 60);
+      text(this.deathMessage, 34, 36);
+      text("Restarting the level...", 34, 64);
       return;
     }
 
-    text("Jump from platform to platform in the sky.", 30, 30);
-    text("Snap starts. A runs. Clap jumps. Keyboard still works.", 30, 52);
-    text(`Current score: ${this.score}`, 30, 74);
+    text("Follow the sky route and dodge the spikes.", 34, 32);
+    text("Snap starts. Say A to run. Clap or snap to jump.", 34, 54);
+    text(`Current score: ${this.score}`, 34, 76);
   }
 
   updateCamera() {
@@ -464,14 +495,15 @@ export default class Game {
       return;
     }
 
-    const leftDeadZone = width * 0.38;
+    const leftDeadZone = width * 0.34;
+    const lookAhead = Math.max(0, this.player.vx) * 18;
     const targetLeft = constrain(
-      this.player.x - leftDeadZone,
+      this.player.x - leftDeadZone + lookAhead,
       0,
       this.levelWidth - width
     );
 
-    this.cameraX = lerp(this.cameraX, targetLeft, 0.12);
+    this.cameraX = lerp(this.cameraX, targetLeft, 0.1);
   }
 
   centerCameraOnStart() {
@@ -539,7 +571,13 @@ export default class Game {
     if (!currentAni) return;
 
     imageMode(CENTER);
-    animation(currentAni, this.toScreenX(this.player.x), this.player.y - 18, 50, 48);
+    animation(
+      currentAni,
+      this.toScreenX(this.player.x),
+      this.player.y - this.playerArt.yOffset,
+      this.playerArt.w,
+      this.playerArt.h
+    );
   }
 
   toScreenX(worldX) {

@@ -8,7 +8,7 @@ export default class App {
     this.voiceJumpQueued = false;
     this.audioEnabled = false;
     this.voiceRunHoldMs = 220;
-    this.jumpRunCarryMs = 260;
+    this.jumpRunCarryMs = 430;
 
     this.startScreen = document.getElementById("start-screen");
     this.gameScreen = document.getElementById("game-screen");
@@ -167,7 +167,7 @@ export default class App {
     this.audioStatus.textContent = status.detail;
     this.audioDetail.textContent =
       this.audioEnabled || status.state === "hearing"
-        ? "Snap starts. In-game: clap or snap jumps. Say A to keep running."
+        ? "Snap starts. In-game: say A to run. Clap or snap to jump."
         : "Keyboard fallback stays available even without microphone input.";
     this.audioLive.textContent = `${stateLabel[status.state] || "Mic"}${
       status.state === "hearing" ? ` · ${status.detail}` : ""
