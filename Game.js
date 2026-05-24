@@ -22,6 +22,10 @@ export default class Game {
     this.platformTileSize = 52;
     this.playerBody = { w: 20, h: 18 };
     this.playerArt = { w: 56, h: 54, yOffset: 16 };
+    this.coyoteFramesMax = 7;
+    this.jumpBufferFramesMax = 8;
+    this.coyoteFrames = 0;
+    this.jumpBufferFrames = 0;
     this.cloudLayers = [
       { y: 54, w: 320, h: 96, speed: 0.024, alpha: 0.3 },
       { y: 118, w: 260, h: 80, speed: 0.055, alpha: 0.18 },
@@ -106,6 +110,8 @@ export default class Game {
     this.deathTimer = 0;
     this.deathMessage = "";
     this.playerState = "idle";
+    this.coyoteFrames = 0;
+    this.jumpBufferFrames = 0;
 
     this.buildLevel();
     this.createPlayer();
@@ -113,42 +119,42 @@ export default class Game {
   }
 
   buildLevel() {
-    const t = this.platformTileSize;
-
     this.platforms = [
       this.makePlatform(260, 560, 5),
-      this.makePlatform(640, 486, 3),
-      this.makePlatform(960, 426, 4),
-      this.makePlatform(1350, 544, 6, [{ tile: 2, tilesWide: 2 }]),
-      this.makePlatform(1775, 456, 3),
-      this.makePlatform(2085, 384, 3),
-      this.makePlatform(2450, 470, 5, [{ tile: 1, tilesWide: 3 }]),
-      this.makePlatform(2860, 348, 3),
-      this.makePlatform(3190, 440, 4),
-      this.makePlatform(3580, 338, 5),
-      this.makePlatform(3960, 270, 3),
+      this.makePlatform(640, 504, 4),
+      this.makePlatform(1020, 448, 4),
+      this.makePlatform(1410, 534, 5, [{ tile: 2, tilesWide: 2 }]),
+      this.makePlatform(1830, 454, 4),
+      this.makePlatform(2200, 374, 3),
+      this.makePlatform(2570, 456, 5, [{ tile: 1, tilesWide: 2 }]),
+      this.makePlatform(2950, 386, 3),
+      this.makePlatform(3320, 324, 4),
+      this.makePlatform(3720, 416, 5, [{ tile: 3, tilesWide: 1 }]),
+      this.makePlatform(4100, 308, 4),
+      this.makePlatform(4440, 252, 4),
     ];
 
     this.gems = [
       { x: 260, y: 486, points: 10, collected: false },
-      { x: 640, y: 412, points: 10, collected: false },
-      { x: 960, y: 352, points: 15, collected: false },
-      { x: 1180, y: 300, points: 25, collected: false },
-      { x: 1775, y: 382, points: 15, collected: false },
-      { x: 2085, y: 304, points: 20, collected: false },
-      { x: 2860, y: 270, points: 25, collected: false },
-      { x: 3420, y: 260, points: 30, collected: false },
-      { x: 3960, y: 194, points: 40, collected: false },
+      { x: 640, y: 430, points: 10, collected: false },
+      { x: 1020, y: 374, points: 15, collected: false },
+      { x: 1230, y: 318, points: 25, collected: false },
+      { x: 1830, y: 378, points: 15, collected: false },
+      { x: 2200, y: 294, points: 20, collected: false },
+      { x: 2760, y: 350, points: 30, collected: false },
+      { x: 3320, y: 244, points: 30, collected: false },
+      { x: 4100, y: 232, points: 35, collected: false },
+      { x: 4440, y: 176, points: 45, collected: false },
     ];
 
     this.goal = {
-      x: 4230,
-      y: 198,
+      x: 4730,
+      y: 180,
       w: 40,
       h: 150,
     };
 
-    this.levelWidth = 4500;
+    this.levelWidth = 4980;
   }
 
   createPlayer() {
@@ -199,12 +205,25 @@ export default class Game {
     const externalInput = this.getInputState?.() || { run: false, jump: false };
     const jumpPressed =
       kb.pressing("space") || kb.pressing("up") || kb.pressing("w");
+    const wantsJump = jumpPressed || externalInput.jump;
     const runPressed = moveRight || externalInput.run;
+
+    if (this.player.grounded) {
+      this.coyoteFrames = this.coyoteFramesMax;
+    } else {
+      this.coyoteFrames = Math.max(0, this.coyoteFrames - 1);
+    }
+
+    if (wantsJump && !this.jumpPressedLastFrame) {
+      this.jumpBufferFrames = this.jumpBufferFramesMax;
+    } else {
+      this.jumpBufferFrames = Math.max(0, this.jumpBufferFrames - 1);
+    }
 
     this.applyHorizontalMovement(runPressed, moveLeft);
     this.applyGravity();
-    this.resolvePlatformCollisions(jumpPressed || externalInput.jump);
-    this.jumpPressedLastFrame = jumpPressed || externalInput.jump;
+    this.resolvePlatformCollisions();
+    this.jumpPressedLastFrame = wantsJump;
     this.checkSpikeHazards();
     this.collectGems();
     this.checkGoal();
@@ -241,7 +260,7 @@ export default class Game {
     this.player.grounded = false;
   }
 
-  resolvePlatformCollisions(jumpPressed) {
+  resolvePlatformCollisions() {
     const playerLeft = this.player.x - this.player.w / 2;
     const playerRight = this.player.x + this.player.w / 2;
     const playerBottom = this.player.y + this.player.h / 2;
@@ -267,11 +286,14 @@ export default class Game {
       this.player.y = landingTop - this.player.h / 2;
       this.player.vy = 0;
       this.player.grounded = true;
+      this.coyoteFrames = this.coyoteFramesMax;
     }
 
-    if (jumpPressed && !this.jumpPressedLastFrame && this.player.grounded) {
+    if (this.jumpBufferFrames > 0 && this.coyoteFrames > 0) {
       this.player.vy = -11.2;
       this.player.grounded = false;
+      this.jumpBufferFrames = 0;
+      this.coyoteFrames = 0;
     }
   }
 
