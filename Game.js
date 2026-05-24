@@ -1,8 +1,9 @@
 export default class Game {
-  constructor({ containerId, onLevelComplete, onScoreChange }) {
+  constructor({ containerId, onLevelComplete, onScoreChange, getInputState }) {
     this.containerId = containerId;
     this.onLevelComplete = onLevelComplete;
     this.onScoreChange = onScoreChange;
+    this.getInputState = getInputState;
     this.isInitialized = false;
     this.isActive = false;
     this.score = 0;
@@ -144,8 +145,8 @@ export default class Game {
     this.player = {
       x: 220,
       y: 506,
-      w: 16,
-      h: 14,
+      w: 18,
+      h: 16,
       vx: 0,
       vy: 0,
       grounded: false,
@@ -167,17 +168,19 @@ export default class Game {
 
     const moveRight = kb.pressing("d") || kb.pressing("right");
     const moveLeft = kb.pressing("a") || kb.pressing("left");
+    const externalInput = this.getInputState?.() || { run: false, jump: false };
     const jumpPressed =
       kb.pressing("space") || kb.pressing("up") || kb.pressing("w");
+    const runPressed = moveRight || externalInput.run;
 
-    this.applyHorizontalMovement(moveRight, moveLeft);
+    this.applyHorizontalMovement(runPressed, moveLeft);
     this.applyGravity();
-    this.resolvePlatformCollisions(jumpPressed);
-    this.jumpPressedLastFrame = jumpPressed;
+    this.resolvePlatformCollisions(jumpPressed || externalInput.jump);
+    this.jumpPressedLastFrame = jumpPressed || externalInput.jump;
     this.checkSpikeHazards();
     this.collectGems();
     this.checkGoal();
-    this.updatePlayerAnimation(moveRight, moveLeft);
+    this.updatePlayerAnimation(runPressed, moveLeft);
 
     if (this.player.y > height + 80) {
       this.triggerDeath("You fell off the map!");
@@ -222,9 +225,9 @@ export default class Game {
       const right = platform.x + platform.w / 2;
       const top = platform.y - platform.h / 2;
 
-      const overlapsX = playerRight > left + 2 && playerLeft < right - 2;
-      const wasAbove = previousBottom <= top + 1;
-      const crossedTop = playerBottom >= top;
+      const overlapsX = playerRight > left + 4 && playerLeft < right - 4;
+      const wasAbove = previousBottom <= top + 8;
+      const crossedTop = playerBottom >= top - 4;
 
       if (overlapsX && wasAbove && crossedTop && this.player.vy >= 0) {
         landingTop = landingTop === null ? top : Math.min(landingTop, top);
@@ -261,7 +264,7 @@ export default class Game {
   checkSpikeHazards() {
     const playerLeft = this.player.x - this.player.w / 2 + 3;
     const playerRight = this.player.x + this.player.w / 2 - 3;
-    const playerTop = this.player.y - this.player.h / 2 + 1;
+    const playerTop = this.player.y - this.player.h / 2 + 2;
     const playerBottom = this.player.y + this.player.h / 2 - 2;
 
     for (const platform of this.platforms) {
@@ -451,7 +454,7 @@ export default class Game {
     }
 
     text("Jump from platform to platform in the sky.", 30, 30);
-    text("Collect gems and reach the flag.", 30, 52);
+    text("Snap starts. A runs. Clap jumps. Keyboard still works.", 30, 52);
     text(`Current score: ${this.score}`, 30, 74);
   }
 
@@ -536,7 +539,7 @@ export default class Game {
     if (!currentAni) return;
 
     imageMode(CENTER);
-    animation(currentAni, this.toScreenX(this.player.x), this.player.y - 24, 42, 40);
+    animation(currentAni, this.toScreenX(this.player.x), this.player.y - 18, 50, 48);
   }
 
   toScreenX(worldX) {
